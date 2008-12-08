@@ -6,9 +6,26 @@ try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
+import unicodedata
 import pyparsing
 
 START, END, TERM = ("start", "end", "term")
+
+try:
+    unichr(65536)
+    max_u_glyph = 1114111
+except:
+    max_u_glyph = 65535
+u_letters = ''.join(unichr(c) for c in xrange(max_u_glyph)
+                    if unicodedata.category(unichr(c))[0] == 'L')
+u_numbers = ''.join(unichr(c) for c in xrange(max_u_glyph)
+                    if unicodedata.category(unichr(c))[0] == 'N')
+u_symbols = ''.join(unichr(c) for c in xrange(max_u_glyph)
+                    if unicodedata.category(unichr(c))[0] == 'S')
+
+class QuerySyntaxError(Exception):
+    pass
+
 
 class SearchQuery(object):
     """
@@ -94,7 +111,7 @@ class BaseQueryConverter(object):
         return s
 
     def handle_term(self, term):
-        self.converted.write(term)
+        self.converted.write(term.encode('utf-8'))
         self.write_sep()
 
     def write_sep(self):
@@ -208,7 +225,12 @@ def parse(query_string):
          (TERM,  'jacob'),
          (END,   'field')]
     """
-    return _event_generator(_parser(query_string))
+    try:
+        stream = _parser(query_string)
+    except pyparsing.ParseException:
+        raise QuerySyntaxError()
+    return _event_generator(stream)
+
 
 def _event_generator(stream):
     for n in stream:
@@ -222,11 +244,11 @@ def _event_generator(stream):
 
 def _make_parser():
     """Create the search string parser."""
-    from pyparsing import Word, Group, alphanums, alphas8bit, Forward, Suppress, Keyword, OneOrMore
+    from pyparsing import alphanums, Word, Group, Forward, Suppress, Keyword, OneOrMore
 
     query = Forward()
 
-    term = Word(alphas8bit+alphanums+"-.!?,;$&%/").setResultsName("term")
+    term = Word(u_letters+u_numbers+u_symbols+"-.!?,;$&%/").setResultsName("term")
 
     terms = Forward()
     terms << ((term + terms) | term)

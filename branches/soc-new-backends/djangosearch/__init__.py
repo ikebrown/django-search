@@ -4,8 +4,9 @@ Object search engine for Django
 
 from djangosearch.indexer import ModelIndex
 from djangosearch.results import SearchResults
+from djangosearch.query import QuerySyntaxError
 
-__all__ = ['search', 'ModelIndex']
+__all__ = ['search', 'ModelIndex', 'QuerySyntaxError']
 
 
 def search(query, models=None):
