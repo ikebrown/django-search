@@ -16,6 +16,8 @@ try:
     max_u_glyph = 1114111
 except:
     max_u_glyph = 65535
+# because otherwise it takes too long to compile the regex below:
+max_u_glyph = 4096
 u_letters = ''.join(unichr(c) for c in xrange(max_u_glyph)
                     if unicodedata.category(unichr(c))[0] == 'L')
 u_numbers = ''.join(unichr(c) for c in xrange(max_u_glyph)
